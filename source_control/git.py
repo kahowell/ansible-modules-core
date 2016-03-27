@@ -743,7 +743,7 @@ def set_remote_branch(git_path, module, dest, remote, version, depth):
     if rc != 0:
         module.fail_json(msg="Failed to fetch branch from remote: %s" % version, stdout=out, stderr=err, rc=rc)
 
-def switch_version(git_path, module, dest, remote, version, verify_commit, depth):
+def switch_version(git_path, module, dest, remote, version, verify_commit, depth, repo):
     cmd = ''
     if version == 'HEAD':
         branch = get_head_branch(git_path, module, dest, remote)
@@ -751,7 +751,8 @@ def switch_version(git_path, module, dest, remote, version, verify_commit, depth
         if rc != 0:
             module.fail_json(msg="Failed to checkout branch %s" % branch,
                              stdout=out, stderr=err, rc=rc)
-        cmd = "%s reset --hard %s" % (git_path, remote)
+        remote_head = get_remote_head(git_path, module, dest, version, repo, bare=False)
+        cmd = "%s reset --hard %s" % (git_path, remote_head)
     else:
         # FIXME check for local_branch first, should have been fetched already
         if is_remote_branch(git_path, module, dest, remote, version):
@@ -977,7 +978,7 @@ def main():
     # switch to version specified regardless of whether
     # we got new revisions from the repository
     if not bare:
-        switch_version(git_path, module, dest, remote, version, verify_commit, depth)
+        switch_version(git_path, module, dest, remote, version, verify_commit, depth, repo)
 
     # Deal with submodules
     submodules_updated = False
